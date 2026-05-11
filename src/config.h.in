@@ -1,0 +1,31 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+#pragma once
+
+// ==========================================================================================================
+#define J2L_VERSION "@VERSION@"
+
+#if __has_builtin(__builtin_unreachable)
+	#define UNREACHABLE() __builtin_unreachable()
+#else
+	#define UNREACHABLE()
+#endif
+
+#if __has_builtin(__builtin_assume_aligned)
+	#define ASSUME_ALIGNED(type, expr) (type*)(__builtin_assume_aligned(expr, alignof(type)))
+#else
+	#define ASSUME_ALIGNED(type, expr) (type*)(void*)(expr)
+#endif
+
+#if __has_builtin(__builtin_expect)
+	#define LIKELY(cond)   __builtin_expect(!!(cond), 1)
+	#define UNLIKELY(cond) __builtin_expect(!!(cond), 0)
+#else
+	#define LIKELY(cond)   (cond)
+	#define UNLIKELY(cond) (cond)
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+	#define ATTRIBUTE(...) __attribute__((__VA_ARGS__))
+#else
+	#define ATTRIBUTE(...) /* ignore */
+#endif

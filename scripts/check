@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+set -e
+
+# ================================================================================
+# all output to stderr
+exec 1>&2
+
+# do not use `--Werror` with clang-format, as the old ubuntu versions
+# are notoriously buggy, and give out false errors.
+git ls-files -z "**/*.h" "**/*.c" | xargs -0 clang-format --dry-run
+git ls-files -z "**/*.h" "**/*.c" | xargs -0 clang-tidy --warnings-as-errors="*"

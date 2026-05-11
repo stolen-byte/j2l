@@ -1,0 +1,2 @@
+# Include version information on `git archive'
+/scripts/gen-version export-subst

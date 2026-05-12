@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "config.h"
 #include "common.h"
+#include "buffer.h"
 #include "error.h"
 #include "jstring.h"
 #include "transform.h"
@@ -30,20 +31,17 @@ static int
 do_transform(FILE* restrict in, FILE* restrict out)
 {
 	transform_ctx ctx = {0};
+	io_buffer buf;
 
-	char* inbuf = malloc(BUFSIZ * 3);
-	char* outbuf = inbuf + BUFSIZ;
-	if (!inbuf) {
-		die(EXIT_FAILURE, "malloc");
-	}
+	io_buffer_init(&buf, BUFSIZ);
 
 	do {
-		size_t read = fread(inbuf, 1, BUFSIZ, in);
+		size_t read = fread(buf.in, 1, buf.size, in);
 		if (read <= 0) break;
 
-		size_t done = transform_next(&ctx, read, inbuf, outbuf);
+		size_t done = transform_next(&ctx, read, buf.in, buf.out);
 		if (done > 0) {
-			if (fwrite(outbuf, 1, done, out) < done) {
+			if (fwrite(buf.out, 1, done, out) < done) {
 				die(EXIT_FAILURE, "write error");
 			}
 		}
@@ -53,7 +51,7 @@ do_transform(FILE* restrict in, FILE* restrict out)
 		die(EXIT_FAILURE, "read error");
 	}
 
-	free(inbuf);
+	io_buffer_free(&buf);
 	return 0;
 }
 

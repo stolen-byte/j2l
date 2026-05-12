@@ -143,7 +143,7 @@ ALL_LIBS = $(PROG_LIBS) $(LDLIBS)
 CFG_H = src/config.h
 COMPDB = compile_flags.txt
 
-LIB_OBJS = src/error.o src/jstring.o src/transform.o
+LIB_OBJS = src/error.o src/jstring.o src/transform.o src/buffer.o
 TEST_OBJS = tests/string_tests.o
 
 PROGRAM = j2l$X

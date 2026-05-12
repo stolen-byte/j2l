@@ -12,3 +12,13 @@
 #include <stdnoreturn.h>
 #include <sys/types.h>
 // IWYU pragma: end_exports
+
+// =============================================================================
+#define ARRAYSIZE(x) (sizeof(x) / sizeof(*(x)))
+
+// =============================================================================
+void
+set_program_name(const char name[restrict static 1]);
+
+const char*
+program_name(void);

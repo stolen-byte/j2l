@@ -143,7 +143,7 @@ ALL_LIBS = $(PROG_LIBS) $(LDLIBS)
 CFG_H = src/config.h
 COMPDB = compile_flags.txt
 
-LIB_OBJS =
+LIB_OBJS = src/error.o
 TEST_OBJS =
 
 UNIT_TESTS = $(TEST_OBJS:.o=$X)

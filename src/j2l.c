@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "config.h"
 #include "common.h"
+#include "error.h"
 
-#include <errno.h>
-#include <error.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,14 +12,15 @@
 static noreturn void
 usage(int status)
 {
-	printf("usage: j2l [OPTION...] [FILE]\n"
+	printf("usage: %s [OPTION...] [FILE]\n"
 	       "transform json from FILE, to jsonl, and write to standard output.\n"
 	       "\n"
 	       "with no FILE, or when FILE is -, read from standard input\n\n"
 	       "options:\n"
 	       "  -h    display this help and exit.\n"
 	       "  -V    display version information and exit.\n"
-	       "\n");
+	       "\n",
+	       program_name());
 	exit(status);
 }
 
@@ -29,7 +29,7 @@ do_transform(FILE* restrict in, FILE* restrict out)
 {
 	char* buf = malloc(BUFSIZ);
 	if (!buf) {
-		error(EXIT_FAILURE, errno, "malloc");
+		die(EXIT_FAILURE, "malloc");
 	}
 
 	do {
@@ -39,12 +39,12 @@ do_transform(FILE* restrict in, FILE* restrict out)
 		// transform
 
 		if (fwrite(buf, 1, r, out) < r) {
-			error(EXIT_FAILURE, 0, "write error");
+			die(EXIT_FAILURE, "write error");
 		}
 	} while (!feof(in) && !ferror(in));
 
 	if (ferror(in)) {
-		error(EXIT_FAILURE, 0, "read error");
+		die(EXIT_FAILURE, "read error");
 	}
 
 	free(buf);
@@ -61,7 +61,7 @@ open_stream(const char* path)
 	} else {
 		fp = fopen(path, "rb");
 		if (!fp) {
-			error(EXIT_FAILURE, errno, "%s", path);
+			die(EXIT_FAILURE, "%s", path);
 		}
 	}
 
@@ -72,13 +72,15 @@ open_stream(const char* path)
 int
 main(int argc, char* const argv[argc])
 {
+	set_program_name("j2l");
+
 	int opt;
 	while ((opt = getopt(argc, argv, ":hV")) != -1) {
 		switch (opt) {
 		case 'h': usage(EXIT_SUCCESS);
 		case 'V': printf("j2l v%s\n\n", J2L_VERSION); return EXIT_SUCCESS;
-		case ':': error(EXIT_FAILURE, 0, "option '%c' requires an argument", optopt); break;
-		case '?': error(EXIT_FAILURE, 0, "unknown option '%c'", optopt); break;
+		case ':': die(EXIT_FAILURE, "option '%c' requires an argument", optopt);
+		case '?': die(EXIT_FAILURE, "unknown option '%c'", optopt);
 		default:  UNREACHABLE();
 		}
 	}
@@ -90,7 +92,7 @@ main(int argc, char* const argv[argc])
 		const char* inpath = argv[optind++];
 
 		if (optind != argc) {
-			error(EXIT_FAILURE, 0, "extra operand '%s'", argv[optind]);
+			die(EXIT_FAILURE, "extra operand '%s'", argv[optind]);
 		}
 
 		in = open_stream(inpath);

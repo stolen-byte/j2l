@@ -37,3 +37,4 @@ config.mk
 *.exe
 *.obj
 *.lib
+/tmp.*

@@ -143,19 +143,20 @@ ALL_LIBS = $(PROG_LIBS) $(LDLIBS)
 CFG_H = src/config.h
 COMPDB = compile_flags.txt
 
-LIB_OBJS = src/error.o src/jstring.o
+LIB_OBJS = src/error.o src/jstring.o src/transform.o
 TEST_OBJS = tests/string_tests.o
 
 PROGRAM = j2l$X
 UNIT_TESTS = $(patsubst tests/%.o,%$X,$(TEST_OBJS))
-TEST_PROGRAMS = $(UNIT_TESTS)
+JSON_TESTS = $(wildcard tests/data/*.json)
+JSON_RESULTS = $(JSON_TESTS:.json=.jsonl)
 
 OBJECTS = $(LIB_OBJS) src/j2l.o $(TEST_OBJS) tests/tmain.o
 DEPENDS = $(OBJECTS:.o=.d)
 
 # ==============================================================================
 # Targets
-all: $(PROGRAM) $(TEST_PROGRAMS)
+all: $(PROGRAM) $(UNIT_TESTS)
 
 configure: $(CFG_H) $(COMPDB)
 
@@ -172,13 +173,18 @@ install: all
 uninstall:
 	$(Q)$(RM) -v $(DESTDIR)$(BINDIR)/$(PROGRAM)
 
-check: unit-tests
+check: unit-tests json-tests
 
 unit-tests: $(UNIT_TESTS)
 	$(Q)set -e; \
 	for test in $(UNIT_TESTS); do \
 		./$$test; \
 	done
+
+json-tests: tests/transform_tests.sh $(PROGRAM) $(JSON_TESTS) $(JSON_RESULTS)
+	$(Q)set -e; \
+	prog=$(realpath $(PROGRAM)); \
+	$< $$prog $(JSON_TESTS)
 
 -include $(DEPENDS)
 

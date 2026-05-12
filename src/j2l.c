@@ -3,6 +3,7 @@
 #include "common.h"
 #include "error.h"
 #include "jstring.h"
+#include "transform.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,19 +29,23 @@ usage(int status)
 static int
 do_transform(FILE* restrict in, FILE* restrict out)
 {
-	char* buf = malloc(BUFSIZ);
-	if (!buf) {
+	transform_ctx ctx = {0};
+
+	char* inbuf = malloc(BUFSIZ * 3);
+	char* outbuf = inbuf + BUFSIZ;
+	if (!inbuf) {
 		die(EXIT_FAILURE, "malloc");
 	}
 
 	do {
-		size_t r = fread(buf, 1, BUFSIZ, in);
-		if (r <= 0) break;
+		size_t read = fread(inbuf, 1, BUFSIZ, in);
+		if (read <= 0) break;
 
-		// transform
-
-		if (fwrite(buf, 1, r, out) < r) {
-			die(EXIT_FAILURE, "write error");
+		size_t done = transform_next(&ctx, read, inbuf, outbuf);
+		if (done > 0) {
+			if (fwrite(outbuf, 1, done, out) < done) {
+				die(EXIT_FAILURE, "write error");
+			}
 		}
 	} while (!feof(in) && !ferror(in));
 
@@ -48,7 +53,7 @@ do_transform(FILE* restrict in, FILE* restrict out)
 		die(EXIT_FAILURE, "read error");
 	}
 
-	free(buf);
+	free(inbuf);
 	return 0;
 }
 

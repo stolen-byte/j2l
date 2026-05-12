@@ -5,15 +5,16 @@
 #include <stdlib.h>
 
 // =============================================================================
-void
+bool
 io_buffer_init(io_buffer buf[restrict static 1], size_t size)
 {
 	buf->in = malloc(size * 3);
 	if (UNLIKELY(!buf->in)) {
-		die(EXIT_FAILURE, "malloc");
+		return false;
 	}
 	buf->out = buf->in + size;
 	buf->size = size;
+	return true;
 }
 
 void

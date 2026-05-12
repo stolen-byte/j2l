@@ -28,30 +28,28 @@ usage(int status)
 }
 
 static int
-do_transform(FILE* restrict in, FILE* restrict out)
+do_transform(FILE* restrict in, FILE* restrict out, io_buffer io[restrict static 1])
 {
 	transform_ctx ctx = {0};
-	io_buffer buf;
-
-	io_buffer_init(&buf, BUFSIZ);
 
 	do {
-		size_t read = fread(buf.in, 1, buf.size, in);
+		size_t read = fread(io->in, 1, io->size, in);
 		if (read <= 0) break;
 
-		size_t done = transform_next(&ctx, read, buf.in, buf.out);
+		size_t done = transform_next(&ctx, read, io->in, io->out);
 		if (done > 0) {
-			if (fwrite(buf.out, 1, done, out) < done) {
-				die(EXIT_FAILURE, "write error");
+			if (fwrite(io->out, 1, done, out) < done) {
+				error("write error");
+				return EXIT_FAILURE;
 			}
 		}
 	} while (!feof(in) && !ferror(in));
 
 	if (ferror(in)) {
-		die(EXIT_FAILURE, "read error");
+		error("read error");
+		return EXIT_FAILURE;
 	}
 
-	io_buffer_free(&buf);
 	return 0;
 }
 
@@ -102,7 +100,15 @@ main(int argc, char* const argv[argc])
 		in = open_stream(inpath);
 	}
 
-	int status = do_transform(in, stdout);
+	int status = EXIT_FAILURE;
+	io_buffer buf;
+	if (io_buffer_init(&buf, BUFSIZ)) {
+		status = do_transform(in, stdout, &buf);
+		io_buffer_free(&buf);
+	} else {
+		error("io_buffer_init");
+	}
+
 	fclose(in);
 
 	return status;

@@ -10,7 +10,7 @@ typedef struct io_buffer {
 } io_buffer;
 
 // =============================================================================
-void
+bool
 io_buffer_init(io_buffer buf[restrict static 1], size_t size);
 
 void

@@ -5,7 +5,9 @@
 #include "error.h"
 #include "jstring.h"
 #include "transform.h"
+#include "utils.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,8 +22,10 @@ usage(int status)
 	       "\n"
 	       "with no FILE, or when FILE is -, read from standard input\n\n"
 	       "options:\n"
-	       "  -h    display this help and exit.\n"
-	       "  -V    display version information and exit.\n"
+	       "  -b SIZE    buffer size to use for internal read/write buffers.\n"
+	       "             accepts b,k[b],m[b],g[b] size suffixes. (default: 32k).\n"
+	       "  -h         display this help and exit.\n"
+	       "  -V         display version information and exit.\n"
 	       "\n",
 	       program_name());
 	exit(status);
@@ -77,10 +81,24 @@ main(int argc, char* const argv[argc])
 	set_program_name(jbasename(argv[0]));
 
 	int opt;
-	while ((opt = getopt(argc, argv, ":hV")) != -1) {
+	io_buffer buf = {.size = 32768};
+	while ((opt = getopt(argc, argv, ":hVb:")) != -1) {
 		switch (opt) {
 		case 'h': usage(EXIT_SUCCESS);
 		case 'V': printf("j2l v%s\n\n", J2L_VERSION); return EXIT_SUCCESS;
+		case 'b':
+			buf.size = parse_size(optarg);
+			if (errno != 0) {
+				// check for this explicitly, as the 'Invalid or incomplete multibyte or wide character' error string
+				// is not very meaningful in this context
+				if (errno == EILSEQ) {
+					errno = 0;
+					die(EXIT_FAILURE, "invalid size suffix '%s'", optarg);
+				}
+				die(EXIT_FAILURE, "invalid size '%s'", optarg);
+			}
+			if (buf.size == 0) die(EXIT_FAILURE, "size cannot be zero");
+			break;
 		case ':': die(EXIT_FAILURE, "option '%c' requires an argument", optopt);
 		case '?': die(EXIT_FAILURE, "unknown option '%c'", optopt);
 		default:  UNREACHABLE();
@@ -101,8 +119,7 @@ main(int argc, char* const argv[argc])
 	}
 
 	int status = EXIT_FAILURE;
-	io_buffer buf;
-	if (io_buffer_init(&buf, BUFSIZ)) {
+	if (io_buffer_init(&buf, buf.size)) {
 		status = do_transform(in, stdout, &buf);
 		io_buffer_free(&buf);
 	} else {

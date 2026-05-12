@@ -1,0 +1,3 @@
+{"a":"string 1","b":{"c":"string 2"}}
+{"a":"string 3","b":{"c":"string 4"}}
+{"a":"nested { special [,] chars }","b":{"c":"nested { special [,] chars } 2"}}

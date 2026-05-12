@@ -23,11 +23,19 @@ transform_next(transform_ctx ctx[restrict static 1],
 	while (in != end) {
 		char ch = *in++;
 
+		if (ctx->quoted) {
+			if (ch == '"') ctx->quoted = false;
+			*out++ = ch;
+			continue;
+		}
+
 		if (isspace((int)ch) || (ctx->level == 0 && is_array_boundary(ch))) //
 			continue;
 
 		*out++ = ch;
-		if (ch == '{') {
+		if (ch == '"') {
+			ctx->quoted = true;
+		} else if (ch == '{') {
 			ctx->level++;
 		} else if (ch == '}') {
 			if (ctx->level > 0) ctx->level--;

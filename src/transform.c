@@ -5,6 +5,12 @@
 #include <ctype.h>
 
 // =============================================================================
+static inline bool
+is_array_boundary(char ch)
+{
+	return (ch == '[' || ch == ']' || ch == ',');
+}
+
 size_t
 transform_next(transform_ctx ctx[restrict static 1],
                size_t size,
@@ -17,7 +23,8 @@ transform_next(transform_ctx ctx[restrict static 1],
 	while (in != end) {
 		char ch = *in++;
 
-		if (isspace((int)ch)) continue;
+		if (isspace((int)ch) || (ctx->level == 0 && is_array_boundary(ch))) //
+			continue;
 
 		*out++ = ch;
 		if (ch == '{') {

@@ -13,6 +13,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef PLATFORM_WINDOWS
+	#include <fcntl.h> // _O_BINARY
+	#include <io.h>    // _setmode, _fileno
+#endif
+
 // ==========================================================================================================
 static noreturn void
 usage(int status)
@@ -63,6 +68,9 @@ open_stream(const char* path)
 	FILE* fp = NULL;
 
 	if (strcmp(path, "-") == 0) {
+#ifdef PLATFORM_WINDOWS
+		_setmode(_fileno(stdin), _O_BINARY);
+#endif
 		fp = stdin;
 	} else {
 		fp = fopen(path, "rb");
@@ -117,6 +125,10 @@ main(int argc, char* const argv[argc])
 
 		in = open_stream(inpath);
 	}
+
+#ifdef PLATFORM_WINDOWS
+	_setmode(_fileno(stdout), _O_BINARY);
+#endif
 
 	int status = EXIT_FAILURE;
 	if (io_buffer_init(&buf, buf.size)) {

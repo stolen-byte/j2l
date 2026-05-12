@@ -44,5 +44,38 @@ TEST(jstrlcpy)
 	}
 }
 
+TEST(jbasename)
+{
+#define dotest(path, want)               \
+	do {                                   \
+		char buf[] = path;                   \
+		require_streq(jbasename(buf), want); \
+	} while (0)
+
+	dotest("", ".");
+	dotest("/", "/");
+	dotest("//", "/");
+	dotest("///", "/");
+
+	dotest("usr", "usr");
+	dotest("/usr", "usr");
+
+	dotest("/usr/lib", "lib");
+	dotest("/home//dwc//test", "test");
+	dotest("/home/.././test", "test");
+	dotest("/home/dwc/.", ".");
+	dotest("/home/dwc/..", "..");
+
+#ifdef PLATFORM_WINDOWS
+	dotest("c:", "c:");
+	dotest("c:\\", "c:");
+	dotest("c:\\users", "users");
+	dotest("c:\\users\\dwc\\test.exe", "test.exe");
+	dotest("c:\\users\\dwc\\.", ".");
+	dotest("c:\\users\\dwc\\..", "..");
+#endif
+#undef dotest
+}
+
 // =============================================================================
-DECLARE_TESTS("string_tests", jstrlcpy)
+DECLARE_TESTS("string_tests", jstrlcpy, jbasename)

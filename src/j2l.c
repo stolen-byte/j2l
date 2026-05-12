@@ -2,6 +2,7 @@
 #include "config.h"
 #include "common.h"
 #include "error.h"
+#include "jstring.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,7 +73,7 @@ open_stream(const char* path)
 int
 main(int argc, char* const argv[argc])
 {
-	set_program_name("j2l");
+	set_program_name(jbasename(argv[0]));
 
 	int opt;
 	while ((opt = getopt(argc, argv, ":hV")) != -1) {

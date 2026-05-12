@@ -6,6 +6,16 @@
 
 // =============================================================================
 /**
+ * same as xsi `basename` provided by `libgen.h`,
+ * except it supports windows paths.
+ *
+ * this version also returns `const char*`, as it *may* return a pointer to
+ * a non-modifiable string literal.
+ */
+const char*
+jbasename(char* path);
+
+/**
  * same as bsd `strlcpy`, except for argument order
  */
 size_t

@@ -24,7 +24,13 @@ transform_next(transform_ctx ctx[restrict static 1],
 		char ch = *in++;
 
 		if (ctx->quoted) {
-			if (ch == '"') ctx->quoted = false;
+			if (ctx->escaped) {
+				ctx->escaped = false;
+			} else if (ch == '\\') {
+				ctx->escaped = true;
+			} else if (ch == '"') {
+				ctx->quoted = false;
+			}
 			*out++ = ch;
 			continue;
 		}

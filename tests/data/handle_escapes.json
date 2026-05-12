@@ -1,0 +1,14 @@
+{
+	"a": "a \"string\"",
+	"b": {
+		"c": "\"another\" string"
+	},
+	"d": [
+		"string \" 1",
+		"\" string 2",
+		"string 3\"",
+		"with\\slash",
+		"with\"\\slash 2"
+	],
+	"nested json": "{\"a\":1,\"b\":{\"c\":2}}"
+}

@@ -143,12 +143,11 @@ ALL_LIBS = $(PROG_LIBS) $(LDLIBS)
 CFG_H = src/config.h
 COMPDB = compile_flags.txt
 
-LIB_OBJS = src/error.o
-TEST_OBJS =
-
-UNIT_TESTS = $(TEST_OBJS:.o=$X)
+LIB_OBJS = src/error.o src/jstring.o
+TEST_OBJS = tests/string_tests.o
 
 PROGRAM = j2l$X
+UNIT_TESTS = $(patsubst tests/%.o,%$X,$(TEST_OBJS))
 TEST_PROGRAMS = $(UNIT_TESTS)
 
 OBJECTS = $(LIB_OBJS) src/j2l.o $(TEST_OBJS) tests/tmain.o

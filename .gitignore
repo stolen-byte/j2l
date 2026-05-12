@@ -29,7 +29,7 @@ Thumbs.db
 /compile_flags.txt
 /compile_commands.json
 /j2l
-/*-tests
+/*_tests
 *.[aosd]
 *+
 config.h

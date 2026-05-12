@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "error.h"
+#include "jstring.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -32,7 +33,7 @@ error_impl(const char* restrict fmt, va_list args)
 void
 set_program_name(const char name[restrict static 1])
 {
-	strncpy(g_program_name, name, ARRAYSIZE(g_program_name) - 1);
+	jstrlcpy(sizeof(g_program_name), g_program_name, name);
 }
 
 const char*

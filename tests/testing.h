@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include <ctype.h>
 #include <inttypes.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdio.h> // IWYU pragma: keep
 #include <string.h>
@@ -58,17 +57,6 @@ extern const char* g_suite;
 #define SAFECHAR(c) isprint(c) ? (c) : '?'
 
 // =============================================================================
-static inline bool
-is_within(double a, double b, double epsilon) // NOLINT
-{
-	if (!(epsilon >= 0.0)) return false;
-	if (isnan(a) || isnan(b)) return false;
-	if (isinf(a) || isinf(b)) return a == b;
-
-	return fabs(a - b) <= epsilon;
-}
-
-// =============================================================================
 #define fail(msg)                                                                    \
 	do {                                                                               \
 		s->status = 1;                                                                   \
@@ -99,11 +87,4 @@ is_within(double a, double b, double epsilon) // NOLINT
 		if (strcmp(a, b) != 0) {                   \
 			fail_fmt("\"%s\" != \"%s\"", got, want); \
 		}                                          \
-	} while (0)
-
-#define require_within(got, want, epsilon)            \
-	do {                                                \
-		if (!is_within(got, want, epsilon)) {             \
-			fail_fmt("%g != %g (~%g)", got, want, epsilon); \
-		}                                                 \
 	} while (0)

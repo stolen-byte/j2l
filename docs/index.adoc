@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+= j2l
+StolenByte
+:toc:
+:source-highlighter: rouge
+:rouge-style: github
+:title-page:
+
+A command line json to jsonl stream converter.
+
+include::includes/usage.adoc[]
+
+<<<
+
+include::includes/examples.adoc[]
+
+<<<
+
+== Links
+
+include::includes/links.adoc[leveloffset=+1]
+
+<<<
+
+include::includes/license.adoc[]

@@ -63,7 +63,7 @@ PREFIX = /usr
 BINDIR = $(PREFIX)/bin
 MANDIR = $(PREFIX)/share/man
 MAN1DIR = $(MANDIR)/man1
-DOCDIR = $(PREFIX)/share/doc
+DOCDIR = $(PREFIX)/share/doc/j2l
 
 PROG_CFLAGS = -std=c11 -flto=auto -g
 PROG_LDFLAGS = -flto=auto
@@ -175,7 +175,12 @@ MAN1_TXT = docs/j2l.adoc
 DOC_DEPS := $(wildcard docs/includes/*.adoc)
 DOC_MAN1 = $(patsubst %.adoc,%.1.gz,$(MAN1_TXT))
 
+DOC_INDEX = docs/index.adoc
+DOC_PDF = docs/j2l.pdf
+DOC_HTML = docs/j2l.html
+
 ADOC_EXTS = $(realpath docs/extensions.rb)
+ADOC_EXTS += asciidoctor-pdf
 
 ADOC_CMD = $(ADOC) \
 	-a webfonts! \
@@ -193,10 +198,14 @@ configure: $(CFG_H) $(COMPDB)
 man: man1
 man1: $(DOC_MAN1)
 
+docs: pdf html
+pdf: $(DOC_PDF)
+html: $(DOC_HTML)
+
 clean:
 	$(Q)$(RM) $(PROGRAM) $(UNIT_TESTS) $(BENCHES)
 	$(Q)$(RM) $(OBJECTS) $(DEPENDS)
-	$(Q)$(RM) $(DOC_MAN1)
+	$(Q)$(RM) $(DOC_MAN1) $(DOC_PDF) $(DOC_HTML)
 
 distclean: clean
 	$(Q)$(RM) $(CFG_H) $(COMPDB) $(PERF_TMP)
@@ -205,6 +214,8 @@ install: all
 	$(Q)strip $(PROGRAM)
 	$(Q)install -vDm755 -t $(DESTDIR)$(BINDIR) $(PROGRAM)
 	$(Q)install -vDm644 -t $(DESTDIR)$(MAN1DIR) $(DOC_MAN1)
+	$(Q)install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_PDF)
+	$(Q)install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_HTML)
 
 check: unit-tests json-tests
 
@@ -255,10 +266,16 @@ docs/%.1.gz: docs/%.1
 docs/%.1: docs/%.adoc
 	$(QDOC)$(ADOC_CMD) -b manpage -o $@ $<
 
+$(DOC_PDF): $(DOC_INDEX) $(DOC_DEPS)
+	$(QDOC)$(ADOC_CMD) -b pdf -a compress -o $@ $<
+
+$(DOC_HTML): $(DOC_INDEX) $(DOC_DEPS)
+	$(QDOC)$(ADOC_CMD) -b html5 -o $@ $<
+
 $(COMPDB): FORCE
 	$(QGEN)echo -n "$(ALL_CFLAGS)" | sed -E 's|^\s+||;s|\s+|\n|g' >$@
 
 # ==============================================================================
-.PHONY: all compdb clean distclean install man man1
+.PHONY: all compdb clean distclean install man man1 docs pdf html
 .PHONY: check unit-tests json-tests run-bench perf
 FORCE: ;

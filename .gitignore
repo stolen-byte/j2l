@@ -41,3 +41,5 @@ config.mk
 /tmp.*
 *.1
 *.1.gz
+*.pdf
+*.html

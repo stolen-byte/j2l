@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+= j2l(1)
+StolenByte
+:doctype: manpage
+:mansource: J2L
+:manmanual: J2L Manual
+:man-linkstyle: pass:[blue R < >]
+:!author:
+
+== Name
+
+j2l - A command line json to jsonl stream converter.
+
+include::includes/usage.adoc[]
+
+include::includes/examples.adoc[]
+
+== Exit status
+
+*0*::
+	Success.
+
+*1*::
+	Failure (usage error; unexpected error).
+
+include::includes/links.adoc[]

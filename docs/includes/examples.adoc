@@ -1,0 +1,82 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+== Examples
+
+* Process single JSON file to stdout
++
+[source,console]
+$ j2l file1.json
+
+* Concatenate and process multiple JSON files via pipe
++
+[source,console]
+$ cat file1.json file2.json file3.json | j2l
+
+* The default internal buffer size should be enough, but you can use `-b` to change it
++
+[source,console]
+$ j2l -b 4m large.json >large.jsonl
+
+As a more concrete example, consider the following JSON files:
+
+.a.json
+[,json]
+----
+[
+  {
+    "userId": 1,
+    "id": 1,
+    "title": "delectus aut autem",
+    "completed": false
+  },
+  {
+    "userId": 1,
+    "id": 2,
+    "title": "quis ut nam facilis et officia qui",
+    "completed": false
+  },
+  {
+    "userId": 1,
+    "id": 3,
+    "title": "fugiat veniam minus",
+    "completed": false
+  }
+]
+----
+
+.b.json
+[,json]
+----
+{
+  "userId": 1,
+  "id": 7,
+  "title": "illo expedita consequatur quia in",
+  "completed": false
+}
+----
+
+.c.json
+[,json]
+----
+{
+  "userId": 1,
+  "id": 12,
+  "title": "ipsa repellendus fugit nisi",
+  "completed": true
+}
+----
+
+using the following command:
+[source,console]
+$ cat a.json b.json c.json | j2l >all.jsonl
+
+would produce the following output:
+
+.all.json
+[,json]
+----
+{"userId":1,"id":1,"title":"delectus aut autem","completed":false}
+{"userId":1,"id":2,"title":"quis ut nam facilis et officia qui","completed":false}
+{"userId":1,"id":3,"title":"fugiat veniam minus","completed":false}
+{"userId":1,"id":7,"title":"illo expedita consequatur quia in","completed":false}
+{"userId":1,"id":12,"title":"ipsa repellendus fugit nisi","completed":true}
+----

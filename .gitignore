@@ -39,3 +39,5 @@ config.mk
 *.obj
 *.lib
 /tmp.*
+*.1
+*.1.gz

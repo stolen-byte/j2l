@@ -37,11 +37,20 @@
 %: s.%
 
 # ==============================================================================
+ADOC ?= asciidoctor
+
+VERSION := $(shell scripts/gen-version || echo 'fail')
+ifeq ($(VERSION),fail)
+$(error gen_version failed)
+endif
+
 ifndef V
 Q = @
 QGEN = @echo '  GEN $@';
 QCC = @echo '   CC $@';
 QLD = @echo '   LD $@';
+QDOC = @echo ' ADOC $@';
+QGZ = @echo '   GZ $@';
 endif
 
 # ==============================================================================
@@ -162,14 +171,32 @@ PERF_TMP = perf.data perf.data.old perf.out
 OBJECTS = $(LIB_OBJS) src/j2l.o $(TEST_OBJS) tests/tmain.o $(BENCH_OBJS)
 DEPENDS = $(OBJECTS:.o=.d)
 
+MAN1_TXT = docs/j2l.adoc
+DOC_DEPS := $(wildcard docs/includes/*.adoc)
+DOC_MAN1 = $(patsubst %.adoc,%.1.gz,$(MAN1_TXT))
+
+ADOC_EXTS = $(realpath docs/extensions.rb)
+
+ADOC_CMD = $(ADOC) \
+	-a webfonts! \
+	-a revnumber="$(VERSION)" \
+	-a docdatetime="$(shell date -u +"%Y-%m-%d %H:%M:%S")" \
+	$(addprefix -r,$(ADOC_EXTS)) \
+	$(ADOC_ARGS)
+
 # ==============================================================================
 # Targets
-all: $(PROGRAM) $(UNIT_TESTS)
+all: $(PROGRAM) $(UNIT_TESTS) man
 
 configure: $(CFG_H) $(COMPDB)
 
+man: man1
+man1: $(DOC_MAN1)
+
 clean:
-	$(Q)$(RM) $(PROGRAM) $(UNIT_TESTS) $(BENCHES) $(OBJECTS) $(DEPENDS)
+	$(Q)$(RM) $(PROGRAM) $(UNIT_TESTS) $(BENCHES)
+	$(Q)$(RM) $(OBJECTS) $(DEPENDS)
+	$(Q)$(RM) $(DOC_MAN1)
 
 distclean: clean
 	$(Q)$(RM) $(CFG_H) $(COMPDB) $(PERF_TMP)
@@ -177,9 +204,7 @@ distclean: clean
 install: all
 	$(Q)strip $(PROGRAM)
 	$(Q)install -vDm755 -t $(DESTDIR)$(BINDIR) $(PROGRAM)
-
-uninstall:
-	$(Q)$(RM) -v $(DESTDIR)$(BINDIR)/$(PROGRAM)
+	$(Q)install -vDm644 -t $(DESTDIR)$(MAN1DIR) $(DOC_MAN1)
 
 check: unit-tests json-tests
 
@@ -218,15 +243,22 @@ $(BENCHES): %$X: benches/%.o $(LIB_OBJS)
 	$(QCC)$(CC) $(ALL_CFLAGS) -MMD -MP -c $< -o $@
 
 $(CFG_H): $(CFG_H).in
-	$(QGEN)VERSION=$$(scripts/gen-version) && \
-	sed \
-		-e "s|@VERSION@|$$VERSION|g" \
+	$(QGEN)sed \
+		-e "s|@VERSION@|$(VERSION)|g" \
 		$< >$@
+
+$(DOC_MAN1): $(DOC_DEPS)
+
+docs/%.1.gz: docs/%.1
+	$(QGZ)gzip -f $<
+
+docs/%.1: docs/%.adoc
+	$(QDOC)$(ADOC_CMD) -b manpage -o $@ $<
 
 $(COMPDB): FORCE
 	$(QGEN)echo -n "$(ALL_CFLAGS)" | sed -E 's|^\s+||;s|\s+|\n|g' >$@
 
 # ==============================================================================
-.PHONY: all compdb clean distclean install uninstall
+.PHONY: all compdb clean distclean install man man1
 .PHONY: check unit-tests json-tests run-bench perf
 FORCE: ;

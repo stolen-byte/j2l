@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+== Synopsis
+
+*j2l* [_OPTION_]... [_FILE_]
+
+== Description
+
+*j2l* converts JSON data from _FILE_, or standard input, to minified JSONL, and
+writes the result to standard output.
+
+The conversion process effectively removes all non-string whitespace, and
+collapses top-level arrays into a stream of their contents.
+
+With no _FILE_, or when _FILE_ is _-_, read from standard input.
+
+Multiple JSON files can be processed, and concatenated by piping
+them sequentially from standard input.
+
+NOTE: No validation is performed on the actual json structure, as that is
+outside the scope of this program, therefore: if you pass malformed data in,
+expect to get malformed data back.
+
+== Options
+
+*-b* _SIZE_::
+	Size to use for the internal read/write buffer.
++
+Accepts common size suffixes (case-insensitive):
++
+[subs=+quotes]
+----
+*b*     bytes
+*kb*    kilobytes    (1kb = 1024 bytes)
+*mb*    megabytes    (1mb = 1024 kb / 1048576 b)
+*gb*    gigabytes    (1gb = 1024 mb / 1048576 kb / 1073741824 b)
+----
++
+If no suffix is given, bytes is assumed.
++
+NOTE: the trailing 'b' is optional, and can be omitted.
++
+Whitespace is ignored both *before* and *after* the suffix, ie: "3 mb " is
+equivalent to "3mb"
++
+By default, this is _32kb_.
++
+If a suffix is present, _SIZE_ can be a decimal value, eg: `1.5mb`
++
+IMPORTANT: The amount actually allocated will be 3x _SIZE_, to account for
+worst-case scenarios when converting, and because it is not possible to
+convert the data properly in-place.
+
+*-h*::
+	Display program usage information and exit.
+
+*-V*::
+	Display program version information and exit.

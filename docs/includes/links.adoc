@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+== Bugs
+
+See the *j2l* issue tracker: https://github.com/stolen-byte/j2l/issues
+
+== Resources
+
+Git source respository on GitHub: https://github.com/stolen-byte/j2l

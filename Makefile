@@ -128,6 +128,10 @@ endif
 X =
 ifdef TARGET_WINDOWS
 PROG_DEFS += -DPLATFORM_WINDOWS
+# disable this on windows, because MinGW's isnan/isfinite macros are buggy and
+# cause gcc to spew false warnings.
+# ref: https://sourceforge.net/p/mingw-w64/bugs/481/
+PROG_CFLAGS += -Wno-float-conversion
 X = .exe
 endif
 

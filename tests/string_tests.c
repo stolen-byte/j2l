@@ -77,5 +77,38 @@ TEST(jbasename)
 #undef dotest
 }
 
+TEST(is_space)
+{
+	const char* ws = " \v\n\t\f\r";
+	const size_t n = strlen(ws);
+
+	for (char ch = 33; ch < 127; ++ch) {
+		if (is_space(ch)) {
+			fail_fmt("is_space(0x%02x) failed, should return false ('%c')", ch, SAFECHAR(ch));
+		}
+	}
+
+	for (size_t i = 0; i < n; ++i) {
+		char ch = ws[i];
+		if (!is_space(ch)) {
+			fail_fmt("is_space(0x%02x) failed, should return true", ch);
+		}
+	}
+}
+
+TEST(to_lower)
+{
+	const char* hi = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const char* lo = "abcdefghijklmnopqrstuvwxyz";
+	const size_t len = strlen(hi);
+
+	for (size_t i = 0; i < len; ++i) {
+		char ch = to_lower(hi[i]);
+		if (ch != lo[i]) {
+			fail_fmt("to_lower('%c'): '%c' != '%c'", hi[i], ch, lo[i]);
+		}
+	}
+}
+
 // =============================================================================
-DECLARE_TESTS("string_tests", jstrlcpy, jbasename)
+DECLARE_TESTS("string_tests", jstrlcpy, jbasename, is_space, to_lower)

@@ -2,8 +2,6 @@
 #include "transform.h"
 #include "jstring.h"
 
-#include <ctype.h>
-
 // =============================================================================
 static inline bool
 is_array_boundary(char ch)
@@ -35,7 +33,7 @@ transform_next(transform_ctx ctx[restrict static 1],
 			continue;
 		}
 
-		if (isspace((int)ch) || (ctx->level == 0 && is_array_boundary(ch))) //
+		if (is_space(ch) || (ctx->level == 0 && is_array_boundary(ch))) //
 			continue;
 
 		*out++ = ch;

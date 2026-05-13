@@ -20,3 +20,23 @@ jbasename(char* path);
  */
 size_t
 jstrlcpy(size_t size, char dst[restrict size], const char src[restrict static 1]);
+
+/**
+ * locale-independant isspace
+ */
+static inline bool
+is_space(char ch)
+{
+	// 09 0a 0b 0c 0d
+	// \v \n \t \f \r
+	return (ch == 0x20) || ((unsigned)(ch - 0x09) <= 4);
+}
+
+/**
+ * locale-independant tolower
+ */
+static inline char
+to_lower(char ch)
+{
+	return (char)((unsigned char)ch | 0x20);
+}

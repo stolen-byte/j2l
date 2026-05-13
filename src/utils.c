@@ -2,7 +2,6 @@
 #include "utils.h"
 #include "jstring.h"
 
-#include <ctype.h>
 #include <errno.h>
 #include <math.h>
 
@@ -10,7 +9,7 @@
 static inline const char*
 trim(const char p[static 1])
 {
-	while (*p && isspace((unsigned char)*p))
+	while (*p && is_space(*p))
 		++p;
 	return p;
 }
@@ -24,14 +23,14 @@ shift_for_suffix(const char suffix[static 1])
 	suffix = trim(suffix);
 	errno = 0;
 
-	const char* ptr = strchr(sizes, tolower((int)*suffix++));
+	const char* ptr = strchr(sizes, to_lower(*suffix++));
 	if (!ptr) //
 		goto invalid;
 
 	result = 10 * (int)((size_t)ptr - (size_t)sizes);
 
 	// 'b' is optional at the end, except for 'bb', which is invalid
-	if (result > 0 && tolower((int)*suffix) == 'b') //
+	if (result > 0 && to_lower(*suffix) == 'b') //
 		suffix++;
 
 	suffix = trim(suffix);

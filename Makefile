@@ -151,7 +151,11 @@ UNIT_TESTS = $(patsubst tests/%.o,%$X,$(TEST_OBJS))
 JSON_TESTS = $(wildcard tests/data/*.json)
 JSON_RESULTS = $(JSON_TESTS:.json=.jsonl)
 
-OBJECTS = $(LIB_OBJS) src/j2l.o $(TEST_OBJS) tests/tmain.o
+BENCHES = bench$X
+BENCH_OBJS = $(patsubst %$X,benches/%.o,$(BENCHES))
+PERF_TMP = perf.data perf.data.old perf.out
+
+OBJECTS = $(LIB_OBJS) src/j2l.o $(TEST_OBJS) tests/tmain.o $(BENCH_OBJS)
 DEPENDS = $(OBJECTS:.o=.d)
 
 # ==============================================================================
@@ -161,10 +165,10 @@ all: $(PROGRAM) $(UNIT_TESTS)
 configure: $(CFG_H) $(COMPDB)
 
 clean:
-	$(Q)$(RM) $(PROGRAM) $(UNIT_TESTS) $(OBJECTS) $(DEPENDS)
+	$(Q)$(RM) $(PROGRAM) $(UNIT_TESTS) $(BENCHES) $(OBJECTS) $(DEPENDS)
 
 distclean: clean
-	$(Q)$(RM) $(CFG_H) $(COMPDB)
+	$(Q)$(RM) $(CFG_H) $(COMPDB) $(PERF_TMP)
 
 install: all
 	$(Q)strip $(PROGRAM)
@@ -186,6 +190,14 @@ json-tests: tests/transform_tests.sh $(PROGRAM) $(JSON_TESTS) $(JSON_RESULTS)
 	prog=$(realpath $(PROGRAM)); \
 	$< $$prog $(JSON_TESTS)
 
+run-bench: benches/data.json $(BENCHES)
+	$(Q)./bench $<
+
+perf: benches/data.json $(BENCHES)
+	$(Q)$(RM) $(PERF_TMP) 2>/dev/null
+	$(Q)perf record -g -F 999 --call-graph=dwarf ./bench $<
+	$(Q)perf script >perf.out
+
 -include $(DEPENDS)
 
 # Build rules
@@ -193,6 +205,9 @@ j2l$X: src/j2l.o $(LIB_OBJS)
 	$(QLD)$(CC) $(ALL_LDFLAGS) -o $@ $^ $(ALL_LIBS)
 
 $(UNIT_TESTS): %$X: tests/%.o tests/tmain.o $(LIB_OBJS)
+	$(QLD)$(CC) $(ALL_LDFLAGS) -o $@ $^ $(ALL_LIBS)
+
+$(BENCHES): %$X: benches/%.o $(LIB_OBJS)
 	$(QLD)$(CC) $(ALL_LDFLAGS) -o $@ $^ $(ALL_LIBS)
 
 %.o: %.c | $(CFG_H)
@@ -208,5 +223,6 @@ $(COMPDB): FORCE
 	$(QGEN)echo -n "$(ALL_CFLAGS)" | sed -E 's|^\s+||;s|\s+|\n|g' >$@
 
 # ==============================================================================
-.PHONY: all compdb clean distclean install uninstall check unit-tests
+.PHONY: all compdb clean distclean install uninstall
+.PHONY: check unit-tests json-tests run-bench perf
 FORCE: ;

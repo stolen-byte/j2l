@@ -30,6 +30,7 @@ Thumbs.db
 /compile_commands.json
 /j2l
 /*_tests
+/bench
 *.[aosd]
 *+
 config.h

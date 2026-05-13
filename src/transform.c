@@ -6,7 +6,8 @@
 static inline bool
 is_array_boundary(char ch)
 {
-	return (ch == '[' || ch == ']' || ch == ',');
+	static const unsigned char chars[256] = {['['] = 1, [']'] = 1, [','] = 1};
+	return (bool)chars[(unsigned char)ch];
 }
 
 size_t
@@ -21,6 +22,7 @@ transform_next(transform_ctx ctx[restrict static 1],
 	while (in != end) {
 		char ch = *in++;
 
+		// most json data is inside quotes, so check that first
 		if (ctx->quoted) {
 			if (ctx->escaped) {
 				ctx->escaped = false;

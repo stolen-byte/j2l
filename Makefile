@@ -191,7 +191,7 @@ ADOC_CMD = $(ADOC) \
 
 # ==============================================================================
 # Targets
-all: $(PROGRAM) $(UNIT_TESTS) man
+all: $(PROGRAM) $(UNIT_TESTS)
 
 configure: $(CFG_H) $(COMPDB)
 
@@ -210,7 +210,7 @@ clean:
 distclean: clean
 	$(Q)$(RM) $(CFG_H) $(COMPDB) $(PERF_TMP)
 
-install: all
+install: all man docs
 	$(Q)strip $(PROGRAM)
 	$(Q)install -vDm755 -t $(DESTDIR)$(BINDIR) $(PROGRAM)
 	$(Q)install -vDm644 -t $(DESTDIR)$(MAN1DIR) $(DOC_MAN1)

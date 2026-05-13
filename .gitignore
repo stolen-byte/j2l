@@ -43,3 +43,4 @@ config.mk
 *.1.gz
 *.pdf
 *.html
+/Gemfile.lock

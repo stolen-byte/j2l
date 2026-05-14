@@ -130,8 +130,10 @@ ifdef NO_OFP
 PROG_CFLAGS += -fno-omit-frame-pointer
 endif
 
+ifeq ($(findstring darwin,$(uname)),)
 ifdef STATIC
 PROG_LDFLAGS += -static
+endif
 endif
 
 X =

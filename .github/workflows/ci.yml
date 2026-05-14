@@ -1,0 +1,157 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  # Because path filters *still* don't play nicely with required checks
+  spec:
+    name: Decide which steps to run
+    if: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      need_rebuild: ${{ steps.filter.outputs.need_rebuild }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: ${{ github.ref == 'refs/heads/master' && 2 || 300 }}
+          submodules: false
+
+      - name: Generate output filters
+        id: filter
+        run: |
+          # Anything that affects the build/tests
+          CODE_REGEX='^(src/|tests/|benches/|Makefile)'
+          # ----------------------------------------------------------------------
+          # We're in a PR context, in a detached HEAD state, so make origin/<BASE_REF> available
+          # Note: this compares the *entire* branch, from the point it was forked, not just the last commit
+          git fetch origin ${{ github.base_ref }} --no-recurse-submodules --depth 300
+          BASE_REV=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
+          TOPIC_REV=${{ github.sha }}
+          # ----------------------------------------------------------------------
+          if git diff --name-only $BASE_REV...$TOPIC_REV | grep -qP "$CODE_REGEX"; then
+            echo "need_rebuild=true" >>$GITHUB_OUTPUT
+          else
+            echo "need_rebuild=false" >>$GITHUB_OUTPUT
+          fi
+
+  check:
+    needs: [spec]
+    if: |
+      !cancelled() &&
+      (needs.spec.outputs.need_rebuild == 'true' || needs.spec.result == 'skipped')
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Print versions
+        run: |
+          clang-format --version
+          clang-tidy --version
+
+      - name: Configure
+        run: make DEV=1 configure
+
+      - name: Run checks
+        run: scripts/check
+
+  build:
+    needs: [spec, check]
+    if: |
+      !cancelled() && !failure() &&
+      (needs.spec.outputs.need_rebuild == 'true' || needs.spec.result == 'skipped')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+            shell: bash
+          - os: macos-latest
+            cc: clang
+            shell: bash
+          - os: windows-latest
+            cc: gcc
+            shell: msys2 {0}
+
+    runs-on: ${{ matrix.os }}
+    env:
+      CC: ${{ matrix.cc }}
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - name: Disable git CRLF shenanigans
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        shell: bash # msys2 not installed yet
+        run: git config --global core.autocrlf input
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - uses: msys2/setup-msys2@v2
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        with:
+          msystem: UCRT64
+          update: true
+          release: false # use pre-installed MSYS2
+          install: >-
+            base-devel
+            git
+          pacboy: gcc:u
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          windows-toolchain: none
+
+      - name: Install gems
+        run: bundle install
+
+      - name: Print versions
+        run: |
+          echo "${CC}: $("$CC" --version)"
+          echo "make: $(make --version)"
+          echo "asciidoctor: $(asciidoctor --version)"
+          echo "asciidoctor-pdf: $(asciidoctor-pdf --version)"
+
+      - name: Build
+        run: make V=1 DEV=1 all
+
+      - name: Run Tests
+        run: make V=1 DEV=1 check
+
+      - name: Build Manpage
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+        run: make V=1 DEV=1 man
+
+      - name: Build Docs
+        run: make V=1 DEV=1 docs
+
+  # the only purpose of this job is to allow usage as a required status check, because matrix jobs are borked as required checks
+  # if *any* build fails (or is cancelled), this fails
+  # if all builds succeed, this is skipped (status = success)
+  # if build is skipped, this is skipped (status = success)
+  build-all:
+    needs: build
+    if: failure() || cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Signal failure
+        run: exit 1

@@ -214,10 +214,17 @@ distclean: clean
 
 install: all
 	$(Q)strip $(PROGRAM)
-	$(Q)install -vDm755 -t $(DESTDIR)$(BINDIR) $(PROGRAM)
-	$(Q)test -f $(DOC_MAN1) && install -vDm644 -t $(DESTDIR)$(MAN1DIR) $(DOC_MAN1) || true
-	$(Q)test -f $(DOC_PDF) && install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_PDF) || true
-	$(Q)test -f $(DOC_HTML) && install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_HTML) || true
+	$(Q)install -dm755 $(DESTDIR)$(BINDIR)
+	$(Q)install -vm755 $(PROGRAM) $(DESTDIR)$(BINDIR)
+
+install-man: man
+	$(Q)install -dm755 $(DESTDIR)$(MAN1DIR)
+	$(Q)install -vm644 $(DOC_MAN1) $(DESTDIR)$(MAN1DIR)
+
+install-docs: docs
+	$(Q)install -dm755 $(DESTDIR)$(DOCDIR)
+	$(Q)install -vm644 $(DOC_PDF) $(DESTDIR)$(DOCDIR)
+	$(Q)install -vm644 $(DOC_HTML) $(DESTDIR)$(DOCDIR)
 
 check: unit-tests json-tests
 
@@ -279,5 +286,5 @@ $(COMPDB): FORCE
 
 # ==============================================================================
 .PHONY: all compdb clean distclean install man man1 docs pdf html
-.PHONY: check unit-tests json-tests run-bench perf
+.PHONY: install-docs install-man check unit-tests json-tests run-bench perf
 FORCE: ;

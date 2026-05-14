@@ -3,7 +3,7 @@
 Building from source requires just a c11 compiler, and is pretty standard:
 
     $ make all man docs # as yourself
-    $ make PREFIX=/usr install # as root
+    $ make PREFIX=/usr install install-man install-docs # as root
 
 The beginning of the makefile documents many variables that effect the way
 j2l is built, you can override them from the command line (as with `PREFIX` above).
@@ -33,11 +33,12 @@ a [Gemfile](../Gemfile) is provided, so to install all the dependencies at once,
 
 from the project root.
 
-There are 3 documentation targets, each built with:
+There are 4 documentation targets, each built with:
 
     $ make man # for the manpages
     $ make pdf # for the pdf documentation
     $ make html # for the html5 documentation
+    $ make docs # both pdf & html documentation
 
 Note that, due to them having extra dependencies (+ ruby), these are not included in the
 default build target.

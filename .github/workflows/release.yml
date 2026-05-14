@@ -128,7 +128,7 @@ jobs:
           zipfile="${ARCHIVE}.zip"
           sumfile="${ARCHIVE}.zip.sha256"
           # -------------------------------------------------
-          make DESTDIR=staging BINDIR=/ DOCDIR=/docs install
+          make DESTDIR=staging BINDIR=/ DOCDIR=/docs install install-docs
           7z a "$zipfile" ./staging/*
           shasum -a 256 "$zipfile" >"$sumfile"
           # -------------------------------------------------
@@ -141,7 +141,7 @@ jobs:
           tarball="${ARCHIVE}.tar.gz"
           sumfile="${ARCHIVE}.tar.gz.sha256"
           # -------------------------------------------------
-          make DESTDIR=staging BINDIR=/ MAN1DIR=/docs DOCDIR=/docs install
+          make DESTDIR=staging BINDIR=/ MAN1DIR=/docs DOCDIR=/docs install install-man install-docs
           tar czf "$tarball" -C staging .
           shasum -a 256 "$tarball" >"$sumfile"
           # -------------------------------------------------

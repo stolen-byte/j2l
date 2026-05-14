@@ -212,12 +212,12 @@ clean:
 distclean: clean
 	$(Q)$(RM) $(CFG_H) $(COMPDB) $(PERF_TMP)
 
-install: all man docs
+install: all
 	$(Q)strip $(PROGRAM)
 	$(Q)install -vDm755 -t $(DESTDIR)$(BINDIR) $(PROGRAM)
-	$(Q)install -vDm644 -t $(DESTDIR)$(MAN1DIR) $(DOC_MAN1)
-	$(Q)install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_PDF)
-	$(Q)install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_HTML)
+	$(Q)test -f $(DOC_MAN1) && install -vDm644 -t $(DESTDIR)$(MAN1DIR) $(DOC_MAN1) || true
+	$(Q)test -f $(DOC_PDF) && install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_PDF) || true
+	$(Q)test -f $(DOC_HTML) && install -vDm644 -t $(DESTDIR)$(DOCDIR) $(DOC_HTML) || true
 
 check: unit-tests json-tests
 

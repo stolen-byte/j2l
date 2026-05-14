@@ -1,0 +1,164 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v?[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: write
+
+env:
+  J2L_TAG: ${{ github.ref_name }}
+  # vars for gh cli
+  GH_REPO: ${{ github.repository }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_TELEMETRY: 0
+
+jobs:
+  setup:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.draft.outputs.version }}
+    steps:
+      - name: Create Draft Release
+        id: draft
+        run: |
+          version="${J2L_TAG#v}"
+          pre=true
+          if [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.*)? ]]; then
+            if [[ -z "${BASH_REMATCH[1]}" ]]; then
+           	  pre=false
+            fi
+          fi
+          gh release create "$J2L_TAG" --draft --prerelease=$pre --verify-tag --title "Release $J2L_TAG"
+          echo "version=$version" >>$GITHUB_OUTPUT
+
+  build:
+    name: Build Release
+    needs: [setup]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            cc: musl-gcc
+            shell: bash
+          - os: macos-latest
+            cc: clang
+            shell: bash
+          - os: windows-latest
+            cc: gcc
+            shell: msys2 {0}
+
+    runs-on: ${{ matrix.os }}
+    env:
+      CC: ${{ matrix.cc }}
+      J2L_VERSION: ${{ needs.setup.outputs.version }}
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - name: Disable git CRLF shenanigans
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        shell: bash # msys2 not installed yet
+        run: git config --global core.autocrlf input
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - uses: msys2/setup-msys2@v2
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        with:
+          msystem: UCRT64
+          update: true
+          release: false # use pre-installed MSYS2
+          install: >-
+            base-devel
+            git
+          pacboy: gcc:u
+
+      - name: Install packages
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          windows-toolchain: none
+
+      - name: Install gems
+        run: bundle install
+
+      # have to use a seperate step for this, as the makefile enables
+      # static depending on if the var is defined at all, not what its value is.
+      - name: Enable static linking
+        if: ${{ !startsWith(matrix.os, 'macos') }}
+        run: echo "STATIC=1" >>$GITHUB_ENV
+
+      - name: Build
+        run: make V=1 all
+
+      - name: Build Manpage
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+        run: make V=1 man
+
+      - name: Build Docs
+        run: make V=1 docs
+
+      - name: Determine Archive name
+        run: |
+          os="$(echo "${{ runner.os }}" | perl -ne 'print lc')"
+          arch="$(echo "${{ runner.arch }}" | perl -ne 'print lc')"
+          echo "ARCHIVE=j2l-${J2L_VERSION}-${os}-${arch}" >>$GITHUB_ENV
+
+      - name: Archive (Windows)
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        run: |
+          zipfile="${ARCHIVE}.zip"
+          sumfile="${ARCHIVE}.zip.sha256"
+          # -------------------------------------------------
+          make DESTDIR=staging BINDIR=/ DOCDIR=/docs install
+          7z a "$zipfile" ./staging/*
+          shasum -a 256 "$zipfile" >"$sumfile"
+          # -------------------------------------------------
+          echo "ASSET=$zipfile" >>$GITHUB_ENV
+          echo "ASSET_SUM=$sumfile" >>$GITHUB_ENV
+
+      - name: Archive (Unix)
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+        run: |
+          tarball="${ARCHIVE}.tar.gz"
+          sumfile="${ARCHIVE}.tar.gz.sha256"
+          # -------------------------------------------------
+          make DESTDIR=staging BINDIR=/ MAN1DIR=/docs DOCDIR=/docs install
+          tar czf "$tarball" -C staging .
+          shasum -a 256 "$tarball" >"$sumfile"
+          # -------------------------------------------------
+          echo "ASSET=$tarball" >>$GITHUB_ENV
+          echo "ASSET_SUM=$sumfile" >>$GITHUB_ENV
+
+      - name: Upload Artifacts
+        run: |
+          gh release upload "$J2L_TAG" "${{ env.ASSET }}" "${{ env.ASSET_SUM }}"
+
+  publish:
+    name: Publish Release
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    env:
+      J2L_VERSION: ${{ needs.setup.outputs.version }}
+    steps:
+      - name: finalise release
+        run: |
+          gh release edit "$J2L_TAG" --draft=false

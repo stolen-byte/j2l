@@ -5,7 +5,7 @@ require 'asciidoctor'
 require 'asciidoctor/extensions'
 require 'asciidoctor/converter/manpage'
 
-# ===========================================================================================================
+# ==============================================================================
 module J2l
 	class ManConverter < Asciidoctor::Converter::ManPageConverter
 		extend Asciidoctor::Converter::Config
@@ -26,6 +26,6 @@ module J2l
 	end
 end
 
-# ===========================================================================================================
+# ==============================================================================
 # Asciidoctor::Extensions.register do
 # end

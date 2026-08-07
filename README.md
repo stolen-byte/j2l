@@ -75,6 +75,26 @@ options:
 
 For detailed usage and options, see [usage](docs/includes/usage.adoc), and [examples](docs/includes/examples.adoc).
 
+## Benchmark
+
+As an example (since nothing to compare against), the output of the included benchmark, on my machine:
+
+```
+$ make run-bench
+==============================
+ITERS: 500
+ DATA: 8.99 MB (4497.28 MB total)
+---
+running...done
+---
+total: 6479.829, lo: 12.700, mean: 12.960, hi: 18.825, rate: 694.04 MB/s
+
+```
+
+where `total`/`lo`/`mean`/`hi` are in milliseconds.
+
+(this is with a RYZEN 5 2600X (6 Core) 3.6 Ghz)
+
 ---
 
 ## License
